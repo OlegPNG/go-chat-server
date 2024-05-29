@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bytes"
+	"encoding/json"
 	"log"
 	"net/http"
 	"time"
@@ -36,7 +36,7 @@ type Client struct {
     username string
     hub *Hub
     conn *websocket.Conn
-    send chan []byte
+    send chan Message 
 }
 
 func (c *Client) readPump() {
@@ -51,7 +51,7 @@ func (c *Client) readPump() {
     })
 
     for {
-        _, message, err := c.conn.ReadMessage()
+        _, raw, err := c.conn.ReadMessage()
         if err != nil {
             if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
                 log.Printf("error: %v", err)
@@ -59,8 +59,20 @@ func (c *Client) readPump() {
             break
         }
         // Idk what this is doing
-        message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-        c.hub.broadcast <- message
+        //content := bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+        msg := Message{}
+        err = json.Unmarshal(raw, &msg)
+        if err != nil {
+            log.Printf("Error umarshalling message: %v", err)
+            errMsg := Message{
+                Username: "server",
+                Content: []byte("Error reading message"),
+                Timestamp: time.Now(),
+            }
+            c.send <- errMsg
+        } else {
+            c.hub.broadcast <- msg
+        }
     }
 }
 
@@ -84,12 +96,28 @@ func (c *Client) writePump() {
             if err != nil {
                 return
             }
-            w. Write(message)
+
+            raw, err := json.Marshal(message)
+            if err != nil {
+                log.Printf("Error marshalling message: %v", err)
+                errMsg := ServerMessage([]byte("Could not send message"))
+                w.Write(errMsg)
+            } else {
+                w.Write(raw)
+            }
 
             n := len(c.send)
             for i := 0; i < n; i++ {
-                w.Write(newline)
-                w.Write(<-c.send)
+                raw, err := json.Marshal(<-c.send)
+                if err != nil {
+                    log.Printf("Error marshalling message: %v", err)
+                    errMsg := ServerMessage([]byte("Could not send message"))
+                    w.Write(errMsg)
+                    break
+                }
+                w.Write(raw)
+                //w.Write(newline)
+                //w.Write(<-c.send)
             }
 
             if err := w.Close(); err != nil {
@@ -112,10 +140,11 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
         return
     }
     log.Printf("username: %v", username)
-    client := &Client{username: username, hub: hub, conn: conn, send: make(chan []byte, 256)}
+    client := &Client{username: username, hub: hub, conn: conn, send: make(chan Message, 256)}
     client.hub.register <- client
 
 
     go client.writePump()
     go client.readPump()
 }
+
