@@ -66,8 +66,7 @@ func (c *Client) readPump() {
             log.Printf("Error umarshalling message: %v", err)
             errMsg := Message{
                 Username: "server",
-                Content: []byte("Error reading message"),
-                Timestamp: time.Now(),
+                Content: "Error reading message",
             }
             c.send <- errMsg
         } else {
@@ -100,7 +99,7 @@ func (c *Client) writePump() {
             raw, err := json.Marshal(message)
             if err != nil {
                 log.Printf("Error marshalling message: %v", err)
-                errMsg := ServerMessage([]byte("Could not send message"))
+                errMsg := ServerMessage("Could not send message")
                 w.Write(errMsg)
             } else {
                 w.Write(raw)
@@ -111,7 +110,7 @@ func (c *Client) writePump() {
                 raw, err := json.Marshal(<-c.send)
                 if err != nil {
                     log.Printf("Error marshalling message: %v", err)
-                    errMsg := ServerMessage([]byte("Could not send message"))
+                    errMsg := ServerMessage("Could not send message")
                     w.Write(errMsg)
                     break
                 }
@@ -139,7 +138,6 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
         log.Println(err)
         return
     }
-    log.Printf("username: %v", username)
     client := &Client{username: username, hub: hub, conn: conn, send: make(chan Message, 256)}
     client.hub.register <- client
 
