@@ -1,0 +1,14 @@
+package main
+
+templ chat(history []Message) {
+    for _, msg := range history {
+        @messageCard(msg)
+    }
+}
+
+templ messageCard(msg Message) {
+    <div>
+        <h3>User: { msg.Username }</h3>
+        <p>{ msg.Content }</p>
+    </div>
+}

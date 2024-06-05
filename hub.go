@@ -5,14 +5,17 @@ type Hub struct {
     broadcast chan Message 
     register chan *Client
     unregister chan *Client
+    history []Message
 }
 
 func newHub() *Hub {
-    return &Hub{
+    return  &Hub{
 	clients:    make(map[*Client]bool),
 	broadcast:  make(chan Message),
 	register:   make(chan *Client),
 	unregister: make(chan *Client),
+	//history: make([]Message, 0),
+	history: testHistory(),
     }
 }
 
@@ -41,6 +44,7 @@ func (h *Hub) run() {
 		close(client.send)
 	    }
 	case message := <- h.broadcast:
+	    h.history = append(h.history, message)
 	    for client := range h.clients {
 		select {
 		case client.send <- message:

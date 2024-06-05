@@ -1,0 +1,14 @@
+<!--<!DOCTYPE html>-->
+<html lang="en">
+    <head>
+        <title>Chat History</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        <h1>Chat History</h1>
+        {{ range . }}
+        {{template "message_card" .}}
+        {{ end }}
+    </body>
+</html>
