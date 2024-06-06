@@ -10,5 +10,6 @@ require (
 
 require (
 	github.com/a-h/templ v0.2.707 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 	golang.org/x/net v0.24.0 // indirect
 )

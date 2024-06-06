@@ -5,16 +5,18 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 
 	//"path"
 	"html/template"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/joho/godotenv"
 	//"github.com/a-h/templ"
 )
 
-var addr = flag.String("addr", ":8080", "http service address")
+//var addr = flag.String("addr", ":8080", "http service address")
 
 //go:embed public/*
 var files embed.FS
@@ -24,6 +26,13 @@ var (
 )
 
 func main() {
+    err := godotenv.Load()
+    if err != nil {
+	log.Fatal("Error loading .env file")
+    }
+
+    addr := os.Getenv("HOST_PORT")
+
     flag.Parse()
     hub := newHub()
     go hub.run()
@@ -37,7 +46,9 @@ func main() {
     r.Get("/chat", func(w http.ResponseWriter, r *http.Request) {
 	chat(hub.history).Render(r.Context(), w)
     })
-    err := http.ListenAndServe(*addr, r)
+
+    log.Println("Starting server...")
+    err = http.ListenAndServe(addr, r)
     if err != nil {
         log.Fatal("ListenAndServer: ", err)
     }
