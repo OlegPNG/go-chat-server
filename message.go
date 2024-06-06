@@ -9,6 +9,10 @@ type Message struct {
     Content     string      `json:"content"`
 }
 
+type HistoryResponse struct {
+    History []Message  `json:"history"`
+}
+
 func ServerMessage(content string) []byte {
     msg, _ := json.Marshal(Message{
         Username: "server",

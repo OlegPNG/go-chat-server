@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
 	"flag"
 	"log"
 	"net/http"
@@ -45,6 +46,17 @@ func main() {
     })
     r.Get("/chat", func(w http.ResponseWriter, r *http.Request) {
 	chat(hub.history).Render(r.Context(), w)
+    })
+
+    r.Get("/history", func(w http.ResponseWriter, r *http.Request) {
+	resp := HistoryResponse { hub.history }
+	raw, err := json.Marshal(resp)
+	if err != nil {
+	    log.Println(err)
+	    return
+	}
+	
+	w.Write(raw)
     })
 
     log.Println("Starting server...")
